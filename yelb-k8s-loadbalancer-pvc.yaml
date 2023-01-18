@@ -1,4 +1,4 @@
-# This should work on Kubernetes deployments that have LoadBalancer support
+# This should work on Kubernetes deployments that have LoadBalancer support, modified to use a PVC
 apiVersion: v1
 kind: Service
 metadata:
@@ -126,6 +126,13 @@ spec:
         image:  mreferre/yelb-db:0.6
         ports:
         - containerPort: 5432
+        volumeMounts:
+          - name: nfs
+            mountPath: "/var/lib/postgresql/data"
+      volumes:
+        - name: nfs
+          persistentVolumeClaim:
+            claimName: pvc-nfs-yelb
 ---
 apiVersion: apps/v1
 kind: Deployment
