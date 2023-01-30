@@ -39,7 +39,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "demo.apps.demo.local"
+  - host: "demo.apps.mlopshub.com"
     http:
       paths:
         - pathType: Prefix
