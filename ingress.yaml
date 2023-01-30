@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "demo.apps.mlopshub.com"
+  - host: "demo.apps.demo.local"
     http:
       paths:
         - pathType: Prefix
