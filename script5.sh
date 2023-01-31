@@ -1,7 +1,7 @@
 #!/bin/sh
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.5.1/deploy/static/provider/cloud/deploy.yaml
-echo Getting IP of nginx ingress controller:
-kubectl -n ingress-nginx get svc ingress-nginx-controller 
+echo -n "Getting IP of nginx ingress controller: "
+kubectl -n ingress-nginx get svc ingress-nginx-controller| grep -i loadbalancer | awk '{ print $4 }' 
 kubectl create namespace dev
 
 for NS in `kubectl get ns --no-headers| awk '{ print $1 }'`
