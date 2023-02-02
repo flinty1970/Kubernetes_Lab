@@ -17,7 +17,7 @@ spec:
     volumeAttributes:
       targetPortal: "192.168.1.20:3260"
       portals: "[]"
-      iqn: "iqn.2023-01.local.demo:servers"
+      iqn: "iqn.2023-01.local.demo:volume1"
       lun: "0"
       iscsiInterface: "default"
       discoveryCHAPAuth: "false"
