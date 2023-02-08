@@ -13,4 +13,7 @@
     when: inventory_hostname in groups['k8s-master']
     command: "sh /tmp/networking.sh"
 
-    
+  - name: Remove file networking.sh
+    ansible.builtin.file:
+      path: /tmp/networking.sh
+      state: absent
