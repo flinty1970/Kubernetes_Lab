@@ -7,8 +7,11 @@
       name: yum-utils
       state: present
 
-  - name: Add Docker repository
-    command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+   - name: Add Docker repo 
+      yum_repository:
+        name: Docker Repo
+        description: “Repo for hosts in testing”
+        baseurl: “https://download.docker.com/linux/centos/docker-ce.repo”
 
   - name: Install Docker
     yum: 
@@ -19,7 +22,23 @@
       - docker-ce
       - docker-ce-cli 
       - containerd.io
-    
+      - epel-release 
+      - open-vm-tools 
+      - device-mapper-persistent-data 
+      - lvm2
+      - yum-utils
+
+  - name: Disable SELinux
+    selinux:
+      state: disabled
+
+  - name: edit selinux file
+    lineinfile:
+      path: /etc/sysconfig/selinux
+      regexp: 'SELINUX=enforcing'
+      line: 'SELINUX=disabled'
+      backrefs: yes
+
   - name: Remove file /etc/containerd/config.toml
     ansible.builtin.file:
       path: /etc/containerd/config.toml
@@ -37,6 +56,14 @@
       state: started
       enabled: yes
 
+  - name: Add YUM repository for Kubernetes
+    get_url: 
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/kubernetes.repo 
+      dest: /etc/yum.repos.d/kubernetes.repo
+      mode: 0755 
+      owner: root
+      group: root
+
   - name: Remove swapfile from /etc/fstab
     mount:
       name: "{{ item }}"
@@ -50,21 +77,21 @@
     command: swapoff -a
     when: ansible_swaptotal_mb > 0
 
-  - name: Disable IPtables
-    command: iptables -F
+  - name: Stop and disable firewalld.
+    service:
+      name: firewalld
+      state: stopped
+      enabled: False
 
-  - name: Disable SELinux
-    selinux:
-      state: disabled
+  - name: Add conf for containerd
+    blockinfile:
+      path: "/etc/sysctl.d/k8s.conf"
+      block: |
+              net.bridge.bridge-nf-call-ip6tables = 1
+              net.bridge.bridge-nf-call-iptables = 1
 
-  - name: Add YUM repository for Kubernetes
-    get_url: 
-      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/kubernetes.repo 
-      dest: /etc/yum.repos.d/kubernetes.repo
-      mode: 0755 
-      owner: root
-      group: root
-
+  - name: Apply new settings
+      command: sudo sysctl --system
 
   - name: Install Kubernetes
     yum: 
@@ -80,22 +107,13 @@
   - name: Restart kubelet
     service:
       name: kubelet
-      daemon_reload: yes
-      state: restarted
-
-  - name: disable firewall
-    service:
-      name: firewalld
-      state: stopped
-      enabled: false
+      state: started
+      enabled: True
 
   - name: Initialize the Kubernetes cluster using kubeadm command
     when: inventory_hostname in groups['k8s-master']
     #command: kubeadm init --apiserver-advertise-address="10.128.0.29" --pod-network-cidr=10.244.0.0/16
-    shell: kubeadm init --pod-network-cidr=192.168.0.0/16
-    args:
-      chdir: $HOME
-
+    command: kubeadm init --pod-network-cidr=192.168.0.0/16
 
   - name: create .kube directory
     file:
@@ -105,11 +123,10 @@
 
   - name: copies admin.conf to user's kube config
     when: inventory_hostname in groups['k8s-master']
-    copy:
-      src: /etc/kubernetes/admin.conf
-      dest: /home/kube/.kube/config
-      remote_src: yes
-      owner: root
+    command: "{{ item  }}"
+      - mkdir -p /root/.kube
+      - cp -i /etc/kubernetes/admin.conf /root/.kube/config
+      - chown root:root /root/.kube/config
 
 
 #  - name: Install Flannel pod network
@@ -120,79 +137,60 @@
   - name: Install Flannel Calico network
     become: false
     when: inventory_hostname in groups['k8s-master']
-    shell: kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
-    args:
-      chdir: $HOME
-
+    command: kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+    
   - name: Install Flannel Calico network 2
     become: false
     when: inventory_hostname in groups['k8s-master']
-    shell: kubectl apply -f https://docs.projectcalico.org/manifests/custom-resources.yaml
-    args:
-      chdir: $HOME
+    command: kubectl apply -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+   
 
   - name: StaticARP
     become: false
     when: inventory_hostname in groups['k8s-master']
-    shell: 'kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system'
-    args:
-      chdir: $HOME
-
+    command: 'kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system'
+  
 
   - name: Install MetalLB
     become: false
     when: inventory_hostname in groups['k8s-master']
-    shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
-    args:
-      chdir: $HOME
-
-
-
+    command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+    
   - name: Configure MetalLB 1
     become: false
     when: inventory_hostname in groups['k8s-master']
-    shell: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
-    args:
-      chdir: $HOME
-
-
+    command: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
+  
   - name: Configure MetalLB 2
     become: false
     when: inventory_hostname in groups['k8s-master']
     command: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml
-    args:
-      chdir: $HOME
-
-
+   
   - name: Retrieve Kubernetes join command that is used to join worker node(s)
     become: false
     when: inventory_hostname in groups['k8s-master']
-    shell: kubeadm token create  --print-join-command
-    register: kubernetes_join_command
+    command: kubeadm token create  --print-join-command
+    register: join_command
 
   - debug:
-      msg: "{{ kubernetes_join_command.stdout }}"
+      msg: "{{ join_command.stdout }}"
 
   - name: Attach kubeadm join command to a file on Ansible control node
     when: inventory_hostname in groups['k8s-master']
     #local_action: "copy content='{{ join_command.stdout_lines[0] }}' dest=join-command"
-    local_action: 'copy content="{{ kubernetes_join_command.stdout_lines[0] }}" dest="/tmp/kubernetes_join_command" mode=0777'
+        local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="/tmp/join-command" mode=0777'
 
 
   - name: Copy join command from Ansiblehost to the worker nodes.
     when: inventory_hostname in groups['k8s-worker']
     copy:
-      src: /tmp/kubernetes_join_command
-      dest: /tmp/kubernetes_join_command
+      src: /tmp/join_command
+      dest: /tmp/join_command
       mode: 0777
-
-  - name: Copy the join-command file created above to worker node
-    when: inventory_hostname in groups['k8s-worker']
-    copy: src=join-command dest=/tmp/kubeadm-join.sh mode=0777
 
   - name: Join the worker node to cluster
     when: inventory_hostname in groups['k8s-worker']
-    command: sh /tmp/kubernetes_join_command
+    command: sh /tmp/join_command
     register: joined_or_not
 
 
