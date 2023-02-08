@@ -1,34 +1,28 @@
 ---
-- hosts: all
+- hosts: k8s-master
   become: true
   tasks:
   
   - name: Install Calico network
-    become: false
-    when: inventory_hostname in groups['k8s-master']
-    command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
+    command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/tigera-operator.yaml
     
   - name: Install Calico network 2
-    become: false
-    when: inventory_hostname in groups['k8s-master']
-    command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
+    command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
+
+
+- name: Pause for 3 minutes to deploy Calico
+  ansible.builtin.pause:
+    minutes: 2
+
 
   - name: StaticARP
-    become: false
-    when: inventory_hostname in groups['k8s-master']
-    command: 'kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system'
+    raw: 'kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system'
 
   - name: Install MetalLB
-    become: false
-    when: inventory_hostname in groups['k8s-master']
     command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
     
   - name: Configure MetalLB 1
-    become: false
-    when: inventory_hostname in groups['k8s-master']
     command: kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
   
   - name: Configure MetalLB 2
-    become: false
-    when: inventory_hostname in groups['k8s-master']
     command: kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml
