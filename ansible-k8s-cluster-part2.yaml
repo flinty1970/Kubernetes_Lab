@@ -2,27 +2,15 @@
 - hosts: k8s-master
   become: true
   tasks:
-  
-  - name: Install Calico network
-    command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/tigera-operator.yaml
+
+- name: Download Networking Script 
+    when: inventory_hostname in groups['k8s-master']
+    get_url:
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking.sh 
+      dest: /tmp/networking.sh
+
+- name: Running Networking Script 
+    when: inventory_hostname in groups['k8s-master']
+    command: "sh /tmp/networking.sh"
+
     
-  - name: Install Calico network 2
-    command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
-
-
-  - name: Pause for 3 minutes to deploy Calico
-    ansible.builtin.pause:
-      minutes: 3
-
-
-  - name: StaticARP
-    raw: 'kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system'
-
-  - name: Install MetalLB
-    command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
-    
-  - name: Configure MetalLB 1
-    command: kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
-  
-  - name: Configure MetalLB 2
-    command: kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml
