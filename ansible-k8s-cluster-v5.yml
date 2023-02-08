@@ -5,6 +5,8 @@
 
   - name: Yum Check Update
     command: yum check update
+    args:
+      warn: false
 
   - name: Add Docker repo 
     get_url:
@@ -120,7 +122,9 @@
 
   - name: copies admin.conf to user's kube config
     when: inventory_hostname in groups['k8s-master']
-    command: "{{ item  }}"
+    command: "{{ item  }}"    
+    args:
+      warn: false
     with_items:
     - mkdir -p $HOME/.kube
     - cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
