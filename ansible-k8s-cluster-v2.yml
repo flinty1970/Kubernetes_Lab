@@ -7,11 +7,11 @@
       name: yum-utils
       state: present
 
-   - name: Add Docker repo 
-      yum_repository:
-        name: Docker Repo
-        description: “Repo for hosts in testing”
-        baseurl: “https://download.docker.com/linux/centos/docker-ce.repo”
+  - name: Add Docker repo 
+    yum_repository:
+      name: Docker Repo
+      description: “Repo for hosts in testing”
+      baseurl: “https://download.docker.com/linux/centos/docker-ce.repo”
 
   - name: Install Docker
     yum: 
