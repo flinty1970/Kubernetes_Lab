@@ -174,9 +174,9 @@
   - name: Configure MetalLB 1
     become: false
     when: inventory_hostname in groups['k8s-master']
-    command: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
+    command: kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
   
   - name: Configure MetalLB 2
     become: false
     when: inventory_hostname in groups['k8s-master']
-    command: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml
+    command: kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml
