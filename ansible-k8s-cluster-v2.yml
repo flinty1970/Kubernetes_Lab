@@ -1,0 +1,182 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Yum Check Update
+    command: yum check update
+
+  - name: Add Docker repo 
+    get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docker-ce.repo
+
+  - name: Install Docker
+    yum: 
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - docker-ce
+      - docker-ce-cli 
+      - containerd.io
+      - epel-release 
+      - open-vm-tools 
+      - device-mapper-persistent-data 
+      - lvm2
+      - yum-utils
+
+  - name: Disable SELinux
+    selinux:
+      state: disabled
+
+  - name: edit selinux file
+    lineinfile:
+      path: /etc/sysconfig/selinux
+      regexp: 'SELINUX=enforcing'
+      line: 'SELINUX=disabled'
+      backrefs: yes
+
+  - name: Remove file /etc/containerd/config.toml
+    ansible.builtin.file:
+      path: /etc/containerd/config.toml
+      state: absent
+
+  - name: Start & enable Docker service
+    ansible.builtin.service:
+      name: docker
+      state: started
+      enabled: yes
+
+  - name: Start & enable containerd service
+    ansible.builtin.service:
+      name: containerd
+      state: started
+      enabled: yes
+
+  - name: Add YUM repository for Kubernetes
+    get_url: 
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/kubernetes.repo 
+      dest: /etc/yum.repos.d/kubernetes.repo
+      mode: 0755 
+      owner: root
+      group: root
+
+  - name: Remove swapfile from /etc/fstab
+    mount:
+      name: "{{ item }}"
+      fstype: swap
+      state: absent
+    with_items:
+      - swap
+      - none
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+
+  - name: Stop and disable firewalld.
+    service:
+      name: firewalld
+      state: stopped
+      enabled: False
+
+  - name: Add conf for containerd
+    shell: |
+      cat <<EOF >  /etc/sysctl.d/k8s.conf
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      EOF
+
+  - name: Apply new settings
+    command: sysctl --system
+
+  - name: Install Kubernetes
+    yum: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+        - kubelet 
+        - kubeadm 
+        - kubectl
+
+  - name: start kubelet
+    service:
+      name: kubelet
+      state: started
+      enabled: True
+
+  - name: Initialize the Kubernetes cluster using kubeadm command
+    when: inventory_hostname in groups['k8s-master']
+    command: kubeadm init --pod-network-cidr=192.168.0.0/16
+
+  - name: create .kube directory
+    file:
+      path: $HOME/.kube
+      state: directory
+      mode: 0755
+
+  - name: copies admin.conf to user's kube config
+    when: inventory_hostname in groups['k8s-master']
+    command: "{{ item  }}"
+    with_items:
+    - mkdir -p $HOME/.kube
+    - cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    - chown root:root $HOME/.kube/config
+    - chmod 0755 $HOME/.kube/config
+
+
+
+  - name: Retrieve Kubernetes join command that is used to join worker node(s)
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: "kubeadm token create  --print-join-command"
+    register: join_command
+
+  - name: Send Kubernetes join command to worker nodeis to cluster
+    when: inventory_hostname in groups['k8s-worker']
+    copy: 
+      content: "{{ hostvars['master']['join_command'].stdout_lines[0] }}" 
+      dest: "/tmp/join-command" 
+      mode: 0777
+
+  - name: Add Workers to Kubernetes Cluster
+    when: inventory_hostname in groups['k8s-worker']
+    command: "sh /tmp/join-command"
+
+#  - name: Install Flannel pod network
+#    become: false
+#    when: inventory_hostname in groups['k8s-master']
+#    command: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+
+  - name: Install Calico network
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+    
+  - name: Install Calico network 2
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: kubectl apply -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+
+  - name: StaticARP
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: 'kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system'
+
+  - name: Install MetalLB
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+    
+  - name: Configure MetalLB 1
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
+  
+  - name: Configure MetalLB 2
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml

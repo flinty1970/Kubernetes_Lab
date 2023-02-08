@@ -1,0 +1,12 @@
+[k8s-master]
+master
+
+[k8s-worker]
+worker-01
+worker-02
+worker-03
+
+
+[cluster:children]
+k8s-master
+k8s-worker
