@@ -10,9 +10,9 @@
     command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
 
 
-- name: Pause for 3 minutes to deploy Calico
-  ansible.builtin.pause:
-    minutes: 2
+  - name: Pause for 3 minutes to deploy Calico
+    ansible.builtin.pause:
+      minutes: 3
 
 
   - name: StaticARP
