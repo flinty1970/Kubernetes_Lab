@@ -150,3 +150,18 @@
 #    become: false
 #    when: inventory_hostname in groups['k8s-master']
 #    command: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+
+- name: Download Networking Script 
+    when: inventory_hostname in groups['k8s-master']
+    get_url:
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking.sh 
+      dest: /tmp/networking.sh
+
+- name: Running Networking Script 
+    when: inventory_hostname in groups['k8s-master']
+    command: "sh /tmp/networking.sh"
+
+  - name: Remove file networking.sh
+    ansible.builtin.file:
+      path: /tmp/networking.sh
+      state: absent
