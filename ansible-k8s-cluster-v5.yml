@@ -147,9 +147,6 @@
       dest: "/tmp/join-command" 
       mode: 0777
 
-  - name: Add Workers to Kubernetes Cluster
-    when: inventory_hostname in groups['k8s-worker']
-    command: "sh /tmp/join-command"
 
 #  - name: Install Flannel pod network
 #    become: false
@@ -170,3 +167,7 @@
     ansible.builtin.file:
       path: /tmp/networking.sh
       state: absent
+
+  - name: Add Workers to Kubernetes Cluster
+    when: inventory_hostname in groups['k8s-worker']
+    command: "sh /tmp/join-command"
