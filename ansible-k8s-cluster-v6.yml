@@ -113,7 +113,7 @@
 
   - name: Initialize the Kubernetes cluster using kubeadm command
     when: inventory_hostname in groups['k8s-master']
-    command: kubeadm init --pod-network-cidr=10.244.0.0/16
+    command: kubeadm init --pod-network-cidr=172.16.0.0/16
 
   - name: create .kube directory
     file:
@@ -158,7 +158,7 @@
   - name: Download Networking Script 
     when: inventory_hostname in groups['k8s-master']
     get_url:
-      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking1.sh 
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking2.sh 
       dest: /tmp/networking.sh
 
   - name: Running Networking Script 
