@@ -158,15 +158,15 @@
   - name: Download Networking Script 
     when: inventory_hostname in groups['k8s-master']
     get_url:
-      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking.sh 
-      dest: /tmp/networking.sh
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking1.sh 
+      dest: /tmp/networking1.sh
 
   - name: Running Networking Script 
     when: inventory_hostname in groups['k8s-master']
-    command: "sh /tmp/networking.sh"
+    command: "sh /tmp/networking1.sh"
 
-  - name: Remove file networking.sh
+  - name: Remove file networking1.sh
     ansible.builtin.file:
-      path: /tmp/networking.sh
+      path: /tmp/networking1.sh
       state: absent
 
