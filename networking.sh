@@ -2,25 +2,17 @@
 
 echo Install Calico network
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/tigera-operator.yaml
-
-loop=1
-while [ $loop -ne 0 ]
-do
-  loop=`kubectl get pods -A --no-headers | grep -v Running| grep -v coredns |sort| uniq | wc -l`
-  sleep 1
-done
-sleep 20
-
 echo Install Calico network 2
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
+kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/calico-cr.yaml
+#kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
 
+sleep 20
 loop=1
 while [ $loop -ne 0 ]
 do
   loop=`kubectl get pods -A --no-headers | grep -v Running| grep -v coredns |sort| uniq | wc -l`
   sleep 1
 done
-sleep 20
 
 echo StaticARP
 kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
