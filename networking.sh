@@ -2,13 +2,11 @@
 
 echo Install Calico network
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
-sleep 30
+sleep 10
 echo Install Calico network 2
 #kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/calico-cr.yaml
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
-
-echo wait 2 mins
-sleep 180
+sleep 10
 
 loop=1
 while [ $loop -ne 0 ]
@@ -22,7 +20,7 @@ kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: f
 
 echo Install MetalLB
 kubectl create -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
-sleep 30
+sleep 10
 
 loop=1
 while [ $loop -ne 0 ]
@@ -33,7 +31,7 @@ done
 
 echo Configure MetalLB 1
 kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
-sleep 30
+sleep 10
 
 loop=1
 while [ $loop -ne 0 ]
@@ -42,7 +40,7 @@ do
   sleep 1
 done
 
-sleep 30
+sleep 10
 echo Configure MetalLB 2
 kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb2.yaml
 
