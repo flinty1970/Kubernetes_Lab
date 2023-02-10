@@ -5,7 +5,7 @@ kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0
 sleep 30
 echo Install Calico network 2
 #kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/calico-cr.yaml
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
 
 echo wait 2 mins
 sleep 180
