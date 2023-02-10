@@ -133,21 +133,6 @@
     - chmod 0755 $HOME/.kube/config
 
 
-
-  - name: Retrieve Kubernetes join command that is used to join worker node(s)
-    become: false
-    when: inventory_hostname in groups['k8s-master']
-    command: "kubeadm token create  --print-join-command"
-    register: join_command
-
-  - name: Send Kubernetes join command to worker nodeis to cluster
-    when: inventory_hostname in groups['k8s-worker']
-    copy: 
-      content: "{{ hostvars['master']['join_command'].stdout_lines[0] }}" 
-      dest: "/tmp/join-command" 
-      mode: 0777
-
-
 #  - name: Install Flannel pod network
 #    become: false
 #    when: inventory_hostname in groups['k8s-master']
@@ -168,6 +153,19 @@
       path: /tmp/networking.sh
       state: absent
 
+  - name: Retrieve Kubernetes join command that is used to join worker node(s)
+    become: false
+    when: inventory_hostname in groups['k8s-master']
+    command: "kubeadm token create  --print-join-command"
+    register: join_command
+
+  - name: Send Kubernetes join command to worker nodeis to cluster
+    when: inventory_hostname in groups['k8s-worker']
+    copy: 
+      content: "{{ hostvars['master']['join_command'].stdout_lines[0] }}" 
+      dest: "/tmp/join-command" 
+      mode: 0777
+      
   - name: Add Workers to Kubernetes Cluster
     when: inventory_hostname in groups['k8s-worker']
     command: "sh /tmp/join-command"
