@@ -3,10 +3,11 @@
 echo Install Calico network
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/tigera-operator.yaml
 echo Install Calico network 2
-kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/calico-cr.yaml
-#kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
+#kubectl create -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/calico-cr.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/custom-resources.yaml
 
-sleep 20
+sleep 5
+
 loop=1
 while [ $loop -ne 0 ]
 do
