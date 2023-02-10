@@ -149,12 +149,6 @@
     when: inventory_hostname in groups['k8s-worker']
     command: "sh /tmp/join-command"
     
-
-#  - name: Install Flannel pod network
-#    become: false
-#    when: inventory_hostname in groups['k8s-master']
-#    command: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
-
   - name: Download Networking Script 
     when: inventory_hostname in groups['k8s-master']
     get_url:
