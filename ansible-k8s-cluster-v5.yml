@@ -141,7 +141,7 @@
   - name: Download Networking Script 
     when: inventory_hostname in groups['k8s-master']
     get_url:
-      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking.sh 
+      url: https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/networking1.sh 
       dest: /tmp/networking.sh
 
   - name: Running Networking Script 
