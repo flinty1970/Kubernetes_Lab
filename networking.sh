@@ -12,7 +12,7 @@ loop=1
 while [ $loop -ne 0 ]
 do
   loop=`kubectl get pods -A --no-headers | grep -v Running| grep -v coredns |sort| uniq | wc -l`
-  sleep 1
+  sleep 5
 done
 
 echo StaticARP
