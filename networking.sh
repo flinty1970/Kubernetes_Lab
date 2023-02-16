@@ -29,6 +29,7 @@ do
   sleep 1
 done
 
+sleep 10
 echo Configure MetalLB 1
 kubectl apply -f https://raw.githubusercontent.com/flinty1970/Kubernetes_Lab/main/metallb.yaml
 sleep 5
