@@ -219,3 +219,11 @@
     when: inventory_hostname in groups['k8s-master']
     command: "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.5.1/deploy/static/provider/cloud/deploy.yaml"
       
+  - name: Deploy Grafana Operator
+    when: inventory_hostname in groups['k8s-master']
+    command: "kubectl create -f https://operatorhub.io/install/grafana-operator.yaml"
+      
+  - name: Deploy Grafana Operator
+    when: inventory_hostname in groups['k8s-master']
+    command: "kubectl create -f https://operatorhub.io/install/prometheus.yaml"  
+
